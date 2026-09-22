@@ -18,6 +18,7 @@ app.use(cors({ origin: "http://localhost:5173", credentials: true }));
 app.use(cookieParser());
 app.use("/api/auth", proxy(process.env.AUTH_SERVICE_URL));
 app.use("/api/chat", protect, proxyWithHeader(process.env.Chat_SERVICE_URL));
+app.use("/api/agent", protect, proxy(process.env.AGENT_SERVICE_URL));
 app.use("/api/me", protect, getCurrentUser);
 
 app.get("/", (req, res) => {
