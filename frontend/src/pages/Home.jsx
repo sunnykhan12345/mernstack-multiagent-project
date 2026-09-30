@@ -3,7 +3,9 @@ import { auth, googleProvider } from "../utils/firebase";
 import api from "../utils/axios";
 import { useDispatch, useSelector } from "react-redux";
 import { setUserData } from "../redux/userSlice";
-
+import { Sidebar } from "../components/Sidebar";
+import Artifacates from "../components/Artifacates";
+import { ChatArea } from "../components/ChatArea";
 const Home = () => {
   const userData = useSelector((state) => state.user.userData);
   const dispatch = useDispatch();
@@ -40,6 +42,9 @@ const Home = () => {
 
   return (
     <div className="flex items-center justify-center w-full bg-black h-screen">
+      <Sidebar />
+      <ChatArea />
+      <Artifacates />
       {!userData ? (
         <div className="w-full max-w-md p-8 rounded-xl shadow-lg border bg-white">
           <h1 className="text-2xl font-bold text-center mb-6 text-black">
@@ -60,13 +65,7 @@ const Home = () => {
           </button>
         </div>
       ) : (
-        <div className="text-white text-center">
-          <h1 className="text-3xl font-bold">
-            Welcome, {userData.name || "User"} 👋
-          </h1>
-
-          <p className="mt-2 text-gray-300">You are successfully logged in.</p>
-        </div>
+        <p></p>
       )}
     </div>
   );
