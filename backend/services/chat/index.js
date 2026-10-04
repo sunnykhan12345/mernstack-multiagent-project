@@ -1,17 +1,17 @@
 import express from "express";
 import dotenv from "dotenv";
 import router from "./routes/chat.routes.js";
-dotenv.config();
+dotenv.config({ path: new URL("./.env", import.meta.url) });
 
 const app = express();
 const PORT = process.env.PORT || 8000;
-import connectDB from "../auth/config/db.js";
+import connectDB from "./config/db.js";
 
 // Middleware
 
 app.use(express.json());
 
-connectDB();
+await connectDB();
 app.get("/", (req, res) => {
   res.send("chat connected successfully chat!");
 });

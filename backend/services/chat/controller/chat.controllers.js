@@ -28,11 +28,7 @@ export const saveMessage = async (req, res) => {
   try {
     const { conversationId, role, content } = req.body;
 
-    // Implementation for saving message
-    const message = new Message.create({ conversationId, role, content }).sort({
-      createdAt: -1,
-    });
-    await message.save();
+    const message = await Message.create({ conversationId, role, content });
     res.status(201).json(message);
   } catch (error) {
     res.status(500).json({ message: error.message });
