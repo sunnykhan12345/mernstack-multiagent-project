@@ -1,5 +1,11 @@
 import { useEffect, useState } from "react";
-import { PanelLeftIcon, PenBoxIcon, Plus } from "lucide-react";
+import {
+  LogOut,
+  MessageCircle,
+  PanelLeftIcon,
+  PenBoxIcon,
+  Plus,
+} from "lucide-react";
 import { useDispatch, useSelector } from "react-redux";
 import { createConversation } from "../features/createConversition.js";
 import { getConversations } from "../features/getConversitions.js";
@@ -7,8 +13,12 @@ import {
   addConversation,
   setConversations,
 } from "../redux/conversitionSlice.js";
+import { signOut } from "firebase/auth";
+import api from "../utils/axios.js";
+import { auth } from "../utils/firebase.js";
 export const Sidebar = () => {
   const [collapsed, setCollapsed] = useState(false);
+  const [selectedConversationId, setSelectedConversationId] = useState(null);
   const dispatch = useDispatch();
   const userData = useSelector((state) => state.user.userData);
   const conversations = useSelector(
@@ -34,8 +44,23 @@ export const Sidebar = () => {
     try {
       const conversation = await createConversation();
       dispatch(addConversation(conversation));
+      setSelectedConversationId(conversation._id);
     } catch (error) {
       console.error("Error creating conversation:", error);
+    }
+  };
+
+  const handleLogout = async () => {
+    try {
+      await api.get("/api/logout");
+    } catch (error) {
+      console.error("Error ending logout session:", error);
+    }
+
+    try {
+      await signOut(auth);
+    } catch (error) {
+      console.error("Error signing out:", error);
     }
   };
 
@@ -72,14 +97,62 @@ export const Sidebar = () => {
         {/* conversation list  */}
         <div className="flex-1 overflow-y-auto px-3 py-2">
           {conversations.map((conversation) => (
-            <div
+            <button
+              type="button"
               key={conversation._id}
-              className="truncate rounded-md px-3 py-2 text-sm text-slate-400"
+              onClick={() => setSelectedConversationId(conversation._id)}
+              aria-pressed={selectedConversationId === conversation._id}
+              className={`flex w-full gap-2 items-center truncate rounded-md px-3 py-2 text-left text-sm transition-colors ${
+                selectedConversationId === conversation._id
+                  ? "bg-white/[0.08] text-slate-100"
+                  : "text-slate-400 hover:bg-white/[0.05] hover:text-slate-200"
+              }`}
               title={conversation.title || "New conversation"}
             >
-              {conversation.title || "New conversation"}
-            </div>
+              <MessageCircle className="w-4 h-4 shrink-0" />
+              <span className="truncate">
+                {conversation.title || "New conversation"}
+              </span>
+            </button>
           ))}
+        </div>
+        {/* bottom user getting */}
+        <div className="flex items-center gap-3 border-t border-white/[0.06] px-4 py-3">
+          {userData?.avator ? (
+            <img
+              src={userData.avator}
+              alt=""
+              className="h-9 w-9 shrink-0 rounded-full object-cover"
+            />
+          ) : (
+            <div
+              aria-hidden="true"
+              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-indigo-500 text-sm font-semibold text-white"
+            >
+              {(userData?.name || userData?.email || "U")
+                .charAt(0)
+                .toUpperCase()}
+            </div>
+          )}
+          <div className="min-w-0 flex-1">
+            <p className="truncate text-sm font-medium text-slate-100">
+              {userData?.name || "User"}
+            </p>
+            {userData?.email && (
+              <p className="truncate text-xs text-slate-500">
+                {userData.email}
+              </p>
+            )}
+          </div>
+          <button
+            type="button"
+            onClick={handleLogout}
+            aria-label="Log out"
+            title="Log out"
+            className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md text-slate-400 transition-colors hover:bg-white/[0.08] hover:text-white"
+          >
+            <LogOut className="h-4 w-4" />
+          </button>
         </div>
       </div>
     </div>
