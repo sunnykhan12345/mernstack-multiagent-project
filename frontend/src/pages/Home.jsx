@@ -41,7 +41,7 @@ const Home = () => {
   };
 
   return (
-    <div className="flex items-center justify-center w-full bg-black h-screen">
+    <div className="flex  w-full bg-black h-screen">
       <Sidebar />
       <ChatArea />
       <Artifacates />

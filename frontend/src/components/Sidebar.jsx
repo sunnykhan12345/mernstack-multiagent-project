@@ -2,7 +2,8 @@ import { useEffect, useState } from "react";
 import {
   LogOut,
   MessageCircle,
-  PanelLeftIcon,
+  PanelLeftClose,
+  PanelLeftOpen,
   PenBoxIcon,
   Plus,
 } from "lucide-react";
@@ -11,6 +12,7 @@ import { createConversation } from "../features/createConversition.js";
 import { getConversations } from "../features/getConversitions.js";
 import {
   addConversation,
+  setSelectedConversation,
   setConversations,
 } from "../redux/conversitionSlice.js";
 import { signOut } from "firebase/auth";
@@ -18,11 +20,10 @@ import api from "../utils/axios.js";
 import { auth } from "../utils/firebase.js";
 export const Sidebar = () => {
   const [collapsed, setCollapsed] = useState(false);
-  const [selectedConversationId, setSelectedConversationId] = useState(null);
   const dispatch = useDispatch();
   const userData = useSelector((state) => state.user.userData);
-  const conversations = useSelector(
-    (state) => state.conversation.conversations,
+  const { conversations, selectedConversation } = useSelector(
+    (state) => state.conversation,
   );
 
   useEffect(() => {
@@ -44,7 +45,7 @@ export const Sidebar = () => {
     try {
       const conversation = await createConversation();
       dispatch(addConversation(conversation));
-      setSelectedConversationId(conversation._id);
+      dispatch(setSelectedConversation(conversation));
     } catch (error) {
       console.error("Error creating conversation:", error);
     }
@@ -65,59 +66,90 @@ export const Sidebar = () => {
   };
 
   return (
-    <div className="fixed lg:static inset-y-0 left-0 z-50 w-[270px] h-screen shrink-0 bg-[#0d0f14] border-r border-white/[0.06] text-white">
+    <div
+      className={`fixed inset-y-0 left-0 z-50 h-screen shrink-0 border-r border-white/[0.06] bg-[#0d0f14] text-white transition-[width] duration-200 ease-out lg:static ${
+        collapsed ? "w-[76px]" : "w-[270px]"
+      }`}
+    >
       <div className="flex flex-col h-full">
-        <div className="flex items-center gap-2.5 px-4 py-4 border-b border-white/[0.06]">
-          <div
-            className="hidden lg:flex items-center justify-center w-7 h-7 rounded-lg text-slate-500 hover:text-slate-200 hover:bg-white/[0.06] cursor-pointer transition-colors bg-transparent border-none"
-            onClick={() => setCollapsed(!collapsed)}
+        <div
+          className={`flex h-[65px] items-center border-b border-white/[0.06] ${
+            collapsed ? "justify-center px-2" : "gap-2.5 px-4"
+          }`}
+        >
+          <button
+            type="button"
+            aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+            title={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+            className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-slate-400 transition-colors hover:bg-white/[0.06] hover:text-white"
+            onClick={() => setCollapsed((value) => !value)}
           >
-            <PanelLeftIcon />
-          </div>
-          <span className="text-base font-semibold text-slate-100 tracking-tight flex-1">
-            Multi Agent
-          </span>
-          <span className="text-xs font-medium bg-blue-500 text-white px-2 py-1 rounded-full">
-            free
-          </span>
-          <button onClick={handleCreateConversation}>
-            <PenBoxIcon className="w-4 h-4 text-slate-500 hover:text-slate-200 transition-colors" />
+            {collapsed ? <PanelLeftOpen size={18} /> : <PanelLeftClose size={18} />}
           </button>
+          {!collapsed && (
+            <>
+              <span className="flex-1 truncate text-base font-semibold tracking-tight text-slate-100">
+                Multi Agent
+              </span>
+              <span className="rounded-full bg-blue-500 px-2 py-1 text-xs font-medium text-white">
+                free
+              </span>
+              <button
+                type="button"
+                onClick={handleCreateConversation}
+                aria-label="Create conversation"
+                title="Create conversation"
+                className="rounded-lg p-2 text-slate-400 transition-colors hover:bg-white/[0.06] hover:text-white"
+              >
+                <PenBoxIcon className="h-4 w-4" />
+              </button>
+            </>
+          )}
         </div>
-        {/* chat blus button */}
-        <div className="px-4 pt-4 pb-1">
+        <div className={collapsed ? "px-3 pt-4 pb-1" : "px-4 pt-4 pb-1"}>
           <button
             onClick={handleCreateConversation}
-            className="w-full flex items-center justify-center gap-2.5 px-3 py-2 rounded-lg text-sm font-medium text-slate-100 bg-indigo-500 hover:bg-white/[0.06] transition-colors"
+            aria-label="New chat"
+            title={collapsed ? "New chat" : undefined}
+            className={`flex w-full items-center justify-center rounded-lg bg-indigo-500 py-2 text-sm font-medium text-slate-100 transition-colors hover:bg-indigo-400 ${
+              collapsed ? "px-2" : "gap-2.5 px-3"
+            }`}
           >
-            <Plus className="w-4 h-4" />
-            <span>New Chat</span>
+            <Plus className="h-4 w-4 shrink-0" />
+            {!collapsed && <span>New Chat</span>}
           </button>
         </div>
-        {/* conversation list  */}
-        <div className="flex-1 overflow-y-auto px-3 py-2">
+        <div className="sidebar-scrollbar flex-1 space-y-1 overflow-y-auto px-2 py-2">
           {conversations.map((conversation) => (
             <button
               type="button"
               key={conversation._id}
-              onClick={() => setSelectedConversationId(conversation._id)}
-              aria-pressed={selectedConversationId === conversation._id}
-              className={`flex w-full gap-2 items-center truncate rounded-md px-3 py-2 text-left text-sm transition-colors ${
-                selectedConversationId === conversation._id
-                  ? "bg-white/[0.08] text-slate-100"
+              onClick={() => dispatch(setSelectedConversation(conversation))}
+              aria-pressed={selectedConversation?._id === conversation._id}
+              aria-label={conversation.title || "New conversation"}
+              title={collapsed ? conversation.title || "New conversation" : undefined}
+              className={`flex w-full items-center rounded-lg py-2 text-sm transition-colors ${
+                collapsed ? "justify-center px-2" : "gap-2 px-3 text-left"
+              } ${
+                selectedConversation?._id === conversation._id
+                  ? "bg-indigo-500/15 text-indigo-200"
                   : "text-slate-400 hover:bg-white/[0.05] hover:text-slate-200"
               }`}
-              title={conversation.title || "New conversation"}
             >
-              <MessageCircle className="w-4 h-4 shrink-0" />
-              <span className="truncate">
-                {conversation.title || "New conversation"}
-              </span>
+              <MessageCircle className="h-4 w-4 shrink-0" />
+              {!collapsed && (
+                <span className="truncate">
+                  {conversation.title || "New conversation"}
+                </span>
+              )}
             </button>
           ))}
         </div>
-        {/* bottom user getting */}
-        <div className="flex items-center gap-3 border-t border-white/[0.06] px-4 py-3">
+        <div
+          className={`flex items-center border-t border-white/[0.06] py-3 ${
+            collapsed ? "justify-center px-2" : "gap-3 px-4"
+          }`}
+        >
           {userData?.avator ? (
             <img
               src={userData.avator}
@@ -134,25 +166,29 @@ export const Sidebar = () => {
                 .toUpperCase()}
             </div>
           )}
-          <div className="min-w-0 flex-1">
-            <p className="truncate text-sm font-medium text-slate-100">
-              {userData?.name || "User"}
-            </p>
-            {userData?.email && (
-              <p className="truncate text-xs text-slate-500">
-                {userData.email}
-              </p>
-            )}
-          </div>
-          <button
-            type="button"
-            onClick={handleLogout}
-            aria-label="Log out"
-            title="Log out"
-            className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md text-slate-400 transition-colors hover:bg-white/[0.08] hover:text-white"
-          >
-            <LogOut className="h-4 w-4" />
-          </button>
+          {!collapsed && (
+            <>
+              <div className="min-w-0 flex-1">
+                <p className="truncate text-sm font-medium text-slate-100">
+                  {userData?.name || "User"}
+                </p>
+                {userData?.email && (
+                  <p className="truncate text-xs text-slate-500">
+                    {userData.email}
+                  </p>
+                )}
+              </div>
+              <button
+                type="button"
+                onClick={handleLogout}
+                aria-label="Log out"
+                title="Log out"
+                className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md text-slate-400 transition-colors hover:bg-white/[0.08] hover:text-white"
+              >
+                <LogOut className="h-4 w-4" />
+              </button>
+            </>
+          )}
         </div>
       </div>
     </div>
