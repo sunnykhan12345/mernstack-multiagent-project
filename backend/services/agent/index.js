@@ -3,8 +3,10 @@ import express from "express";
 
 dotenv.config({ path: new URL("./.env", import.meta.url) });
 
-import connectDB from "../auth/config/db.js";
-import router from "./router/agent.router.js";
+const [{ default: connectDB }, { default: router }] = await Promise.all([
+  import("../auth/config/db.js"),
+  import("./router/agent.router.js"),
+]);
 
 const app = express();
 const PORT = process.env.PORT || 8000;

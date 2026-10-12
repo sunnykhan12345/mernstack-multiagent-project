@@ -17,6 +17,19 @@ Available agents:
 - ppt
 - vission
 
+Conversation history:
+${(state.history ?? [])
+  .filter(
+    (message) =>
+      (message.role === "user" || message.role === "assistant") &&
+      typeof message.content === "string",
+  )
+  .map(
+    (message) =>
+      `${message.role === "user" ? "User" : "Assistant"}: ${message.content}`,
+  )
+  .join("\n")}
+
 Routing Rules:
 
 chat:
@@ -26,6 +39,7 @@ chat:
 - Learning
 - Questions
 - Casual discussion
+- Follow-up questions that refer to earlier messages or personal details shared in the conversation
 
 search:
 - Current events
